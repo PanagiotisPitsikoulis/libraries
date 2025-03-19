@@ -38,10 +38,35 @@ if (!existsSync(dbConfigPath)) {
 		const content = readFileSync(dbConfigPath, "utf-8");
 		const config = JSON.parse(content);
 		if (!config.databases || Object.keys(config.databases).length === 0) {
-			utils.logWarning("⚠️  No database configurations found in db.config.json");
+			console.log(
+				"\x1b[33m%s\x1b[0m",
+				"⚠️  No database configurations found in db.config.json",
+			);
+			console.log(
+				"\x1b[36m%s\x1b[0m",
+				"💡 Run 'next-toolchain-config-db' to set up your database configurations",
+			);
 		}
 	} catch (error) {
-		utils.logWarning("⚠️  Could not parse database configuration file");
+		console.log(
+			"\x1b[31m%s\x1b[0m",
+			"❌ Error reading database configuration file",
+		);
+		console.log(
+			"\x1b[33m%s\x1b[0m",
+			"💡 The file might be corrupted or in an invalid format",
+		);
+		console.log(
+			"\x1b[36m%s\x1b[0m",
+			"🔄 Creating a new configuration file with default settings...",
+		);
+
+		const exampleConfig = {
+			databases: databaseRegistry,
+			settings: defaultSettings,
+		};
+		writeFileSync(dbConfigPath, JSON.stringify(exampleConfig, null, 2));
+		utils.logSuccess("✨ New configuration file created successfully!");
 	}
 }
 
@@ -101,7 +126,12 @@ async function updateConfig() {
 			existingConfig = JSON.parse(content);
 			utils.logInfo("📝 Loaded existing configuration");
 		} catch (error) {
-			utils.logWarning("Could not parse existing config, using defaults");
+			console.log("\x1b[31m%s\x1b[0m", "❌ Error reading configuration file");
+			console.log("\x1b[33m%s\x1b[0m", "💡 Using default configuration");
+			existingConfig = {
+				databases: {},
+				settings: defaultSettings,
+			};
 		}
 	}
 
@@ -124,6 +154,7 @@ async function updateConfig() {
 	// Merge existing config with new config
 	const newConfig = {
 		databases: {
+			...(existingConfig?.databases || {}),
 			[selectedPair]: {
 				name: pair.name,
 				local: {
@@ -215,6 +246,11 @@ async function runScript(scriptName: string) {
 
 async function getCurrentDatabase(): Promise<string | null> {
 	if (!existsSync(dbConfigPath)) {
+		console.log("\x1b[33m%s\x1b[0m", "⚠️  No database configuration file found");
+		console.log(
+			"\x1b[36m%s\x1b[0m",
+			"💡 Run 'next-toolchain-config-db' to set up your database",
+		);
 		return null;
 	}
 
@@ -227,8 +263,18 @@ async function getCurrentDatabase(): Promise<string | null> {
 		if (dbKey) {
 			return config.databases[dbKey].name;
 		}
+		console.log("\x1b[33m%s\x1b[0m", "⚠️  No database configurations found");
+		console.log(
+			"\x1b[36m%s\x1b[0m",
+			"💡 Select 'Update Configuration' to set up your database",
+		);
 		return null;
 	} catch (error) {
+		console.log("\x1b[31m%s\x1b[0m", "❌ Error reading database configuration");
+		console.log(
+			"\x1b[33m%s\x1b[0m",
+			"💡 The configuration file might be corrupted",
+		);
 		return null;
 	}
 }

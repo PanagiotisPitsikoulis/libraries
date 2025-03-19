@@ -31,22 +31,60 @@ if (!fs.existsSync(envRegistryPath)) {
 		const content = fs.readFileSync(envRegistryPath, "utf-8");
 		const config = JSON.parse(content);
 		if (!config.projects || Object.keys(config.projects).length === 0) {
-			logWarning("⚠️  No project configurations found in env.config.json");
+			console.log(
+				"\x1b[33m%s\x1b[0m",
+				"⚠️  No project configurations found in env.config.json",
+			);
+			console.log(
+				"\x1b[36m%s\x1b[0m",
+				"💡 Run 'next-toolchain-config-env' to set up your project configurations",
+			);
 		}
 	} catch (error) {
-		logWarning("⚠️  Could not parse environment configuration file");
+		console.log(
+			"\x1b[31m%s\x1b[0m",
+			"❌ Error reading environment configuration file",
+		);
+		console.log(
+			"\x1b[33m%s\x1b[0m",
+			"💡 The file might be corrupted or in an invalid format",
+		);
+		console.log(
+			"\x1b[36m%s\x1b[0m",
+			"🔄 Creating a new configuration file with default settings...",
+		);
+
+		const exampleConfig = {
+			projects: projectRegistry,
+		};
+		fs.writeFileSync(envRegistryPath, JSON.stringify(exampleConfig, null, 2));
+		logSuccess("✨ New configuration file created successfully!");
 	}
 }
 
 async function getCurrentProject(): Promise<string | null> {
 	const envPath = join(rootDir, ".env");
 	if (!fs.existsSync(envPath)) {
+		console.log("\x1b[33m%s\x1b[0m", "⚠️  No .env file found");
+		console.log(
+			"\x1b[36m%s\x1b[0m",
+			"💡 Run 'next-toolchain-config-env' to set up your environment",
+		);
 		return null;
 	}
 
 	try {
 		const content = fs.readFileSync(envPath, "utf-8");
 		const databaseUri = content.match(/DATABASE_URI=(.+)/)?.[1];
+
+		if (!databaseUri) {
+			console.log("\x1b[33m%s\x1b[0m", "⚠️  No DATABASE_URI found in .env file");
+			console.log(
+				"\x1b[36m%s\x1b[0m",
+				"💡 Select a project to configure your environment",
+			);
+			return null;
+		}
 
 		// First try to get registry from temp config
 		let registry = projectRegistry;
@@ -57,17 +95,34 @@ async function getCurrentProject(): Promise<string | null> {
 				);
 				registry = tempConfig.projects;
 			} catch (error) {
-				logWarning("Could not parse temp config, using default registry");
+				console.log("\x1b[31m%s\x1b[0m", "❌ Error reading configuration file");
+				console.log("\x1b[33m%s\x1b[0m", "💡 Using default project registry");
 			}
 		}
 
 		for (const [key, config] of Object.entries(registry)) {
-			if (config.variables.includes(databaseUri!)) {
+			if (config.variables.includes(databaseUri)) {
 				return config.name;
 			}
 		}
+		console.log(
+			"\x1b[33m%s\x1b[0m",
+			"⚠️  No matching project found for current database URI",
+		);
+		console.log(
+			"\x1b[36m%s\x1b[0m",
+			"💡 Select a project to configure your environment",
+		);
 		return null;
 	} catch (error) {
+		console.log(
+			"\x1b[31m%s\x1b[0m",
+			"❌ Error reading environment configuration",
+		);
+		console.log(
+			"\x1b[33m%s\x1b[0m",
+			"💡 The configuration file might be corrupted",
+		);
 		return null;
 	}
 }
@@ -84,7 +139,8 @@ async function updateEnv() {
 				"📝 Loaded existing configuration from .next-toolchain-temp/env.config.json",
 			);
 		} catch (error) {
-			logWarning("Could not parse temp config, using default registry");
+			console.log("\x1b[31m%s\x1b[0m", "❌ Error reading configuration file");
+			console.log("\x1b[33m%s\x1b[0m", "💡 Using default project registry");
 		}
 	}
 
