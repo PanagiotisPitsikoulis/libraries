@@ -5,8 +5,9 @@ import { fileURLToPath } from "node:url";
 import { select } from "@inquirer/prompts";
 import { config } from "dotenv";
 import {
-	getTempDir,
-	getTempFilePath,
+	getUnifiedTempDir,
+	getUnifiedTempFilePath,
+	initExampleConfigs,
 	logError,
 	logInfo,
 	logSuccess,
@@ -21,8 +22,12 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const dbTempDir = getTempDir("db");
-const dbConfPath = getTempFilePath("db", "db.conf");
+const dbConfPath = getUnifiedTempFilePath("db.config.json");
+
+// Initialize example configs if they don't exist
+if (!existsSync(dbConfPath)) {
+	initExampleConfigs();
+}
 
 type ScriptOption = {
 	name: string;

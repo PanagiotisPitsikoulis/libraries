@@ -1,5 +1,6 @@
+#!/usr/bin/env bun
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 export const colors = {
@@ -48,29 +49,92 @@ export async function executeStep(
 	command: string,
 	args: string[] = [],
 ): Promise<boolean> {
-	logInfo(`Step: ${stepName}`);
+	logInfo(`Executing: ${stepName}`);
 	const success = await runCommand(command, args);
-
-	if (!success) {
+	if (success) {
+		logSuccess(`Completed: ${stepName}`);
+	} else {
 		logError(`Failed: ${stepName}`);
-		return false;
 	}
-
-	logSuccess(`Completed: ${stepName}`);
-	return true;
+	return success;
 }
 
 export function getTempDir(name: string): string {
 	const rootDir = process.cwd();
-	const tempDir = join(rootDir, ".next-toolchain", name);
-
+	const tempDir = join(rootDir, `.next-toolchain/${name}`);
 	if (!existsSync(tempDir)) {
 		mkdirSync(tempDir, { recursive: true });
 	}
-
 	return tempDir;
 }
 
 export function getTempFilePath(name: string, filename: string): string {
 	return join(getTempDir(name), filename);
+}
+
+export function getUnifiedTempDir(): string {
+	const rootDir = process.cwd();
+	const tempDir = join(rootDir, ".next-toolchain-temp");
+	if (!existsSync(tempDir)) {
+		mkdirSync(tempDir, { recursive: true });
+	}
+	return tempDir;
+}
+
+export function getUnifiedTempFilePath(filename: string): string {
+	return join(getUnifiedTempDir(), filename);
+}
+
+export function initExampleConfigs(): void {
+	const tempDir = getUnifiedTempDir();
+
+	// Example DB config
+	const dbConfig = {
+		databases: {
+			local: {
+				uri: "postgres://localhost:5432/local_db",
+				name: "Local Database",
+			},
+			production: {
+				uri: "postgres://production:5432/prod_db",
+				name: "Production Database",
+			},
+		},
+		settings: {
+			timeout: 30000,
+			maxConnections: 10,
+		},
+	};
+
+	// Example ENV config
+	const envConfig = {
+		projects: {
+			default: {
+				name: "Default Project",
+				variables: [
+					"NEXT_PUBLIC_API_URL=http://localhost:3000",
+					"DATABASE_URI=postgres://localhost:5432/local_db",
+					"REDIS_URL=redis://localhost:6379",
+				],
+			},
+			production: {
+				name: "Production Project",
+				variables: [
+					"NEXT_PUBLIC_API_URL=https://api.production.com",
+					"DATABASE_URI=postgres://production:5432/prod_db",
+					"REDIS_URL=redis://production:6379",
+				],
+			},
+		},
+	};
+
+	// Write example configs
+	writeFileSync(
+		join(tempDir, "db.config.json"),
+		JSON.stringify(dbConfig, null, 2),
+	);
+	writeFileSync(
+		join(tempDir, "env.config.json"),
+		JSON.stringify(envConfig, null, 2),
+	);
 }

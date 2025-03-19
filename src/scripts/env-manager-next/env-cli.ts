@@ -1,23 +1,23 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { select } from "@inquirer/prompts";
-import { logError, logInfo, logSuccess, logWarning } from "../utils";
+import * as utils from "../utils";
 import { projectRegistry } from "./env-registry";
 
-// Get the root directory (where the command is run)
-const rootDir = process.cwd();
-const tempDir = join(rootDir, ".next-toolchain-config");
-const envRegistryPath = join(tempDir, "env.registry.json");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Ensure temp directory exists
-if (!existsSync(tempDir)) {
-	mkdirSync(tempDir, { recursive: true });
+const envRegistryPath = utils.getUnifiedTempFilePath("env.config.json");
+
+// Initialize example configs if they don't exist
+if (!existsSync(envRegistryPath)) {
+	utils.initExampleConfigs();
 }
 
 async function getCurrentProject(): Promise<string | null> {
-	const envPath = join(rootDir, ".env");
+	const envPath = join(process.cwd(), ".env");
 	if (!existsSync(envPath)) {
 		return null;
 	}
@@ -45,7 +45,7 @@ async function updateEnv() {
 			const content = readFileSync(envRegistryPath, "utf-8");
 			registry = { ...projectRegistry, ...JSON.parse(content) };
 		} catch (error) {
-			logWarning("Could not load custom registry, using defaults");
+			utils.logWarning("Could not load custom registry, using defaults");
 		}
 	}
 
@@ -70,18 +70,18 @@ async function updateEnv() {
 	}
 
 	// Write to .env in project root
-	const envPath = join(rootDir, ".env");
+	const envPath = join(process.cwd(), ".env");
 	writeFileSync(envPath, project.variables);
 
 	// Save updated registry
 	writeFileSync(envRegistryPath, JSON.stringify(registry, null, 2));
 
-	logSuccess("Project configuration updated successfully!");
-	logInfo(`📝 Configuration file: ${envPath}`);
-	logInfo(`🌍 Project: ${project.name}`);
-	logInfo(`📁 Registry stored in: ${envRegistryPath}`);
+	utils.logSuccess("Project configuration updated successfully!");
+	utils.logInfo(`📝 Configuration file: ${envPath}`);
+	utils.logInfo(`🌍 Project: ${project.name}`);
+	utils.logInfo(`📁 Registry stored in: ${envRegistryPath}`);
 
-	logWarning(
+	utils.logWarning(
 		"⚠️  Remember to keep your .env file secure and never commit it to version control",
 	);
 }
@@ -92,7 +92,7 @@ async function main() {
 
 	const currentProject = await getCurrentProject();
 	if (currentProject) {
-		logInfo(`Current project: ${currentProject}`);
+		utils.logInfo(`Current project: ${currentProject}`);
 		console.log("------------------------------------------\n");
 	}
 
@@ -100,6 +100,6 @@ async function main() {
 }
 
 main().catch((error) => {
-	logError(error instanceof Error ? error.message : "Unknown error");
+	utils.logError(error instanceof Error ? error.message : "Unknown error");
 	process.exit(1);
 });
