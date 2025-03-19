@@ -1,6 +1,6 @@
 {
   "name": "next-toolchain",
-  "version": "0.13.0",
+  "version": "0.23.0",
   "type": "module",
   "main": "./dist/ui/index.cjs",
   "module": "./dist/ui/index.js",
@@ -22,9 +22,10 @@
     }
   },
   "bin": {
-    "next-toolchain-config-env": "./dist/node/env-manager-next/env-cli.js",
-    "next-toolchain-config-db": "./dist/node/db-manager-next/db-cli.js",
-    "next-toolchain-publish": "./dist/node/package-publisher-next/publish-cli.js"
+    "next-toolchain-config-env": "dist/node/env-manager-next/env-cli.js",
+    "next-toolchain-config-db": "dist/node/db-manager-next/db-cli.js",
+    "next-toolchain-publish": "dist/node/package-publisher-next/publish-cli.js",
+    "next-toolchain-version": "dist/node/package-publisher-next/version-cli.js"
   },
   "files": [
     "dist/ui",
@@ -40,14 +41,13 @@
     "build": "bun run prebuild && bun run build:node && bun run build:ui",
     "db": "node --experimental-specifier-resolution=node dist/node/db-manager-next/db-cli.js",
     "env": "node --experimental-specifier-resolution=node dist/node/env-manager-next/env-cli.js",
-    "prepublish": "bun run build",
-    "publish:patch": "npm version patch --no-git-tag-version && bun run publish",
-    "publish:minor": "npm version minor --no-git-tag-version && bun run publish",
-    "publish:major": "npm version major --no-git-tag-version && bun run publish",
-    "version:patch": "npm version patch --no-git-tag-version",
-    "version:minor": "npm version minor --no-git-tag-version",
-    "version:major": "npm version major --no-git-tag-version",
-    "publish": "bun ./src/scripts/package-publisher-next/publish-cli.ts"
+    "publish": "bun run build && bun ./src/scripts/package-publisher-next/publish-cli.ts",
+    "publish:patch": "bun ./src/scripts/package-publisher-next/version-cli.ts patch && bun run publish",
+    "publish:minor": "bun ./src/scripts/package-publisher-next/version-cli.ts minor && bun run publish",
+    "publish:major": "bun ./src/scripts/package-publisher-next/version-cli.ts major && bun run publish",
+    "version:patch": "bun ./src/scripts/package-publisher-next/version-cli.ts patch",
+    "version:minor": "bun ./src/scripts/package-publisher-next/version-cli.ts minor",
+    "version:major": "bun ./src/scripts/package-publisher-next/version-cli.ts major"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.2.5",

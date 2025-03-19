@@ -23,6 +23,8 @@ export default defineConfig({
 		"env-manager-next/env-cli": "./src/scripts/env-manager-next/env-cli.ts",
 		"package-publisher-next/publish-cli":
 			"./src/scripts/package-publisher-next/publish-cli.ts",
+		"package-publisher-next/version-cli":
+			"./src/scripts/package-publisher-next/version-cli.ts",
 	},
 	format: ["esm"],
 	outDir: "dist/node",
