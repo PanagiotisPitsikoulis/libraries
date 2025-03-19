@@ -4,7 +4,6 @@ import { $ } from "bun";
 import { config } from "dotenv";
 import {
 	executeStep,
-	getUnifiedTempDir,
 	logError,
 	logInfo,
 	logSuccess,
@@ -12,7 +11,9 @@ import {
 } from "../utils";
 
 // Load environment variables from db.conf in the unified temp folder
-config({ path: join(getUnifiedTempDir(), "db.conf") });
+const rootDir = process.cwd();
+const tempDir = join(rootDir, ".next-toolchain-temp");
+config({ path: join(tempDir, "db.conf") });
 
 const {
 	CLOUD_DB_NAME,

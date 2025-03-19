@@ -1,13 +1,9 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import * as fs from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { select } from "@inquirer/prompts";
 import { logError, logInfo, logSuccess, logWarning } from "../utils";
 import { projectRegistry } from "./env-registry";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Get the root directory (where the command is run)
 const rootDir = process.cwd();

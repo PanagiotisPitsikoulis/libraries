@@ -4,10 +4,11 @@ import { join } from "node:path";
 import { $ } from "bun";
 import { config } from "dotenv";
 import { logError, logInfo, logSuccess } from "../utils";
-import { getUnifiedTempDir } from "../utils";
 
-// Load environment variables from db.conf in the unified temp folder
-config({ path: join(getUnifiedTempDir(), "db.conf") });
+// Load environment variables from db.conf
+const rootDir = process.cwd();
+const tempDir = join(rootDir, ".next-toolchain-temp");
+config({ path: join(tempDir, "db.conf") });
 
 const {
 	LOCAL_DB_HOST,

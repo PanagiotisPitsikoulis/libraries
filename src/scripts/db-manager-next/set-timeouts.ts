@@ -2,10 +2,12 @@
 import { join } from "node:path";
 import { $ } from "bun";
 import { config } from "dotenv";
-import { getUnifiedTempDir, logError, logInfo, logSuccess } from "../utils";
+import { logError, logInfo, logSuccess } from "../utils";
 
 // Load environment variables from db.conf
-config({ path: join(getUnifiedTempDir(), "db.conf") });
+const rootDir = process.cwd();
+const tempDir = join(rootDir, ".next-toolchain-temp");
+config({ path: join(tempDir, "db.conf") });
 
 const {
 	CLOUD_DB_NAME,
