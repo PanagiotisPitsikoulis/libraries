@@ -41,14 +41,13 @@
     "db": "node --experimental-specifier-resolution=node dist/node/db-manager-next/db-cli.js",
     "env": "node --experimental-specifier-resolution=node dist/node/env-manager-next/env-cli.js",
     "prepublish": "bun run build",
-    "publish:patch": "npm version patch --no-git-tag-version && bun run publish:git",
-    "publish:minor": "npm version minor --no-git-tag-version && bun run publish:git",
-    "publish:major": "npm version major --no-git-tag-version && bun run publish:git",
+    "publish:patch": "npm version patch --no-git-tag-version && bun run publish",
+    "publish:minor": "npm version minor --no-git-tag-version && bun run publish",
+    "publish:major": "npm version major --no-git-tag-version && bun run publish",
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version",
     "version:major": "npm version major --no-git-tag-version",
-    "publish:git": "bun ./src/scripts/package-publisher-next/publish-cli.ts",
-    "publish": "bun run publish:minor"
+    "publish": "bun ./src/scripts/package-publisher-next/publish-cli.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.2.5",
