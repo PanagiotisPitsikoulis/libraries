@@ -70,6 +70,18 @@ async function updateConfig() {
 	console.log("🗄️  Database Configuration Manager");
 	console.log("----------------------------------\n");
 
+	// Load existing config if it exists
+	let existingConfig = null;
+	if (existsSync(dbConfPath)) {
+		try {
+			const content = readFileSync(dbConfPath, "utf-8");
+			existingConfig = JSON.parse(content);
+			utils.logInfo("📝 Loaded existing configuration");
+		} catch (error) {
+			utils.logWarning("Could not parse existing config, using defaults");
+		}
+	}
+
 	// Select the database pair
 	const dbPairChoices = Object.entries(databaseRegistry).map(([key, pair]) => ({
 		name: pair.name,
@@ -86,46 +98,83 @@ async function updateConfig() {
 		throw new Error(`Invalid database pair selected: ${selectedPair}`);
 	}
 
-	// Generate db.conf content
+	// Merge existing config with new config
+	const newConfig = {
+		databases: {
+			local: {
+				uri:
+					existingConfig?.databases?.local?.uri ||
+					`postgres://${pair.local.user}:${pair.local.password}@${pair.local.host}:${pair.local.port}/${pair.local.dbName}`,
+				name: pair.local.dbName,
+				user: pair.local.user,
+				host: pair.local.host,
+				port: pair.local.port,
+				password: pair.local.password,
+				dbName: pair.local.dbName,
+			},
+			production: {
+				uri:
+					existingConfig?.databases?.production?.uri ||
+					`postgres://${pair.production.user}:${pair.production.password}@${pair.production.host}:${pair.production.port}/${pair.production.dbName}`,
+				name: pair.production.dbName,
+				user: pair.production.user,
+				host: pair.production.host,
+				port: pair.production.port,
+				password: pair.production.password,
+				dbName: pair.production.dbName,
+			},
+		},
+		settings: {
+			...defaultSettings,
+			...(existingConfig?.settings || {}),
+		},
+	};
+
+	// Write to db.config.json
+	writeFileSync(dbConfPath, JSON.stringify(newConfig, null, 2));
+
+	// Generate db.conf content for environment variables
 	const content = `# Database configuration managed by db-cli
 
 # Local database configuration
-LOCAL_DB_NAME="${pair.local.dbName}"
-LOCAL_DB_USER="${pair.local.user}"
-LOCAL_DB_HOST="${pair.local.host}"
-${pair.local.port ? `LOCAL_DB_PORT="${pair.local.port}"` : ""}
-${pair.local.password ? `LOCAL_DB_PASS="${pair.local.password}"` : ""}
+LOCAL_DB_NAME="${newConfig.databases.local.dbName}"
+LOCAL_DB_USER="${newConfig.databases.local.user}"
+LOCAL_DB_HOST="${newConfig.databases.local.host}"
+${newConfig.databases.local.port ? `LOCAL_DB_PORT="${newConfig.databases.local.port}"` : ""}
+${newConfig.databases.local.password ? `LOCAL_DB_PASS="${newConfig.databases.local.password}"` : ""}
 
 # Cloud database configuration
-CLOUD_DB_NAME="${pair.production.dbName}"
-CLOUD_DB_USER="${pair.production.user}"
-CLOUD_DB_HOST="${pair.production.host}"
-${pair.production.port ? `CLOUD_DB_PORT="${pair.production.port}"` : ""}
-${pair.production.password ? `CLOUD_DB_PASS="${pair.production.password}"` : ""}
+CLOUD_DB_NAME="${newConfig.databases.production.dbName}"
+CLOUD_DB_USER="${newConfig.databases.production.user}"
+CLOUD_DB_HOST="${newConfig.databases.production.host}"
+${newConfig.databases.production.port ? `CLOUD_DB_PORT="${newConfig.databases.production.port}"` : ""}
+${newConfig.databases.production.password ? `CLOUD_DB_PASS="${newConfig.databases.production.password}"` : ""}
 
 # Database settings
-DB_MAX_CONNECTIONS=${defaultSettings.maxConnections}
-DB_STATEMENT_TIMEOUT="${defaultSettings.statementTimeout}"
-DB_IDLE_TRANSACTION_TIMEOUT="${defaultSettings.idleTransactionTimeout}"
-DB_IDLE_SESSION_TIMEOUT="${defaultSettings.idleSessionTimeout}"
-DB_MASTER_IDLE_TIMEOUT="${defaultSettings.masterIdleTimeout}"
-DB_TCP_KEEPALIVES_IDLE=${defaultSettings.tcpKeepalivesIdle}
-DB_TCP_KEEPALIVES_INTERVAL=${defaultSettings.tcpKeepalivesInterval}
-DB_TCP_KEEPALIVES_COUNT=${defaultSettings.tcpKeepalivesCount}
+DB_MAX_CONNECTIONS=${newConfig.settings.maxConnections}
+DB_STATEMENT_TIMEOUT="${newConfig.settings.statementTimeout}"
+DB_IDLE_TRANSACTION_TIMEOUT="${newConfig.settings.idleTransactionTimeout}"
+DB_IDLE_SESSION_TIMEOUT="${newConfig.settings.idleSessionTimeout}"
+DB_MASTER_IDLE_TIMEOUT="${newConfig.settings.masterIdleTimeout}"
+DB_TCP_KEEPALIVES_IDLE=${newConfig.settings.tcpKeepalivesIdle}
+DB_TCP_KEEPALIVES_INTERVAL=${newConfig.settings.tcpKeepalivesInterval}
+DB_TCP_KEEPALIVES_COUNT=${newConfig.settings.tcpKeepalivesCount}
 
 # Application user settings
-APP_USER="${defaultSettings.appUser}"
-APP_PASS="${defaultSettings.appPass}"`;
+APP_USER="${newConfig.settings.appUser}"
+APP_PASS="${newConfig.settings.appPass}"`;
 
 	// Write to db.conf
-	writeFileSync(dbConfPath, content);
+	writeFileSync(join(process.cwd(), ".env"), content);
 
 	utils.logSuccess("Database configuration updated successfully!");
 	utils.logInfo(`📝 Configuration file: ${dbConfPath}`);
 	utils.logInfo(`🔌 Connected to: ${pair.name}`);
-	utils.logInfo(`📊 Local: ${pair.local.dbName} on ${pair.local.host}`);
 	utils.logInfo(
-		`🌍 Production: ${pair.production.dbName} on ${pair.production.host}`,
+		`📊 Local: ${newConfig.databases.local.dbName} on ${newConfig.databases.local.host}`,
+	);
+	utils.logInfo(
+		`🌍 Production: ${newConfig.databases.production.dbName} on ${newConfig.databases.production.host}`,
 	);
 }
 

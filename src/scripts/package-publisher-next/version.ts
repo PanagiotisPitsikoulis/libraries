@@ -19,8 +19,15 @@ function execCommand(command: string, errorMessage?: string): boolean {
 }
 
 function updateVersion(type: "patch" | "minor" | "major"): void {
+	log(`📝 Reading package.json...`, colors.blue);
 	const packageJson = JSON.parse(readFileSync("./package.json", "utf8"));
+	log(`Current version: ${packageJson.version}`, colors.blue);
+
 	const [major, minor, patch] = packageJson.version.split(".").map(Number);
+	log(
+		`Parsed version: major=${major}, minor=${minor}, patch=${patch}`,
+		colors.blue,
+	);
 
 	switch (type) {
 		case "patch":
@@ -34,7 +41,16 @@ function updateVersion(type: "patch" | "minor" | "major"): void {
 			break;
 	}
 
+	log(
+		`Writing new version ${packageJson.version} to package.json...`,
+		colors.blue,
+	);
 	writeFileSync("./package.json", JSON.stringify(packageJson, null, 2) + "\n");
+
+	// Verify the write
+	const verifyJson = JSON.parse(readFileSync("./package.json", "utf8"));
+	log(`Verified package.json version: ${verifyJson.version}`, colors.blue);
+
 	log(`✅ Updated version to ${packageJson.version}`, colors.green);
 }
 

@@ -43,9 +43,19 @@ async function updateEnv() {
 	if (existsSync(envRegistryPath)) {
 		try {
 			const content = readFileSync(envRegistryPath, "utf-8");
-			registry = { ...projectRegistry, ...JSON.parse(content) };
+			const customRegistry = JSON.parse(content);
+			// Merge custom registry with defaults, keeping custom values
+			registry = {
+				...projectRegistry,
+				...customRegistry,
+				projects: {
+					...projectRegistry.projects,
+					...customRegistry.projects,
+				},
+			};
+			utils.logInfo("📝 Loaded existing configuration");
 		} catch (error) {
-			utils.logWarning("Could not load custom registry, using defaults");
+			utils.logWarning("Could not parse existing config, using defaults");
 		}
 	}
 
