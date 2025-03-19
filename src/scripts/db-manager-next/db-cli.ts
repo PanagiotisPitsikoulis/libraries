@@ -120,10 +120,12 @@ async function updateConfig() {
 
 	// Load existing config if it exists
 	let existingConfig = null;
+	let availableDatabases = databaseRegistry;
 	if (existsSync(dbConfigPath)) {
 		try {
 			const content = readFileSync(dbConfigPath, "utf-8");
 			existingConfig = JSON.parse(content);
+			availableDatabases = existingConfig.databases || databaseRegistry;
 			utils.logInfo("📝 Loaded existing configuration");
 		} catch (error) {
 			console.log("\x1b[31m%s\x1b[0m", "❌ Error reading configuration file");
@@ -136,17 +138,19 @@ async function updateConfig() {
 	}
 
 	// Select the database pair
-	const dbPairChoices = Object.entries(databaseRegistry).map(([key, pair]) => ({
-		name: pair.name,
-		value: key,
-	}));
+	const dbPairChoices = Object.entries(availableDatabases).map(
+		([key, pair]) => ({
+			name: pair.name,
+			value: key,
+		}),
+	);
 
 	const selectedPair = await select({
 		message: "Select database:",
 		choices: dbPairChoices,
 	});
 
-	const pair = databaseRegistry[selectedPair];
+	const pair = availableDatabases[selectedPair];
 	if (!pair) {
 		throw new Error(`Invalid database pair selected: ${selectedPair}`);
 	}
@@ -256,19 +260,33 @@ async function getCurrentDatabase(): Promise<string | null> {
 
 	try {
 		const content = readFileSync(dbConfigPath, "utf-8");
-		const config = JSON.parse(content);
+		const config = JSON.parse(content) as { databases: Record<string, DBPair> };
 
-		// Get the first database key (assuming only one is configured)
-		const dbKey = Object.keys(config.databases)[0];
-		if (dbKey) {
-			return config.databases[dbKey].name;
+		if (!config.databases || Object.keys(config.databases).length === 0) {
+			console.log("\x1b[33m%s\x1b[0m", "⚠️  No database configurations found");
+			console.log(
+				"\x1b[36m%s\x1b[0m",
+				"💡 Select 'Update Configuration' to set up your database",
+			);
+			return null;
 		}
-		console.log("\x1b[33m%s\x1b[0m", "⚠️  No database configurations found");
-		console.log(
-			"\x1b[36m%s\x1b[0m",
-			"💡 Select 'Update Configuration' to set up your database",
-		);
-		return null;
+
+		// Get all configured databases
+		const databases = Object.entries(config.databases).map(([key, db]) => ({
+			name: db.name,
+			local: `${db.local.dbName} on ${db.local.host}`,
+			production: `${db.production.dbName} on ${db.production.host}`,
+		}));
+
+		// Show all configured databases
+		console.log("\x1b[36m%s\x1b[0m", "📊 Configured Databases:");
+		for (const db of databases) {
+			console.log(`\n${db.name}:`);
+			console.log(`  Local: ${db.local}`);
+			console.log(`  Production: ${db.production}`);
+		}
+
+		return databases[0].name; // Return the first database name for compatibility
 	} catch (error) {
 		console.log("\x1b[31m%s\x1b[0m", "❌ Error reading database configuration");
 		console.log(
