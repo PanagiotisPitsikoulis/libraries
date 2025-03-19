@@ -15,11 +15,34 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const dbConfPath = utils.getUnifiedTempFilePath("db.config.json");
+// Get the root directory (where the command is run)
+const rootDir = process.cwd();
+const tempDir = join(rootDir, ".next-toolchain-temp");
+const dbConfigPath = join(tempDir, "db.config.json");
+
+// Ensure temp directory exists
+if (!existsSync(tempDir)) {
+	utils.runCommand(`mkdir -p ${tempDir}`);
+}
 
 // Initialize example configs if they don't exist
-if (!existsSync(dbConfPath)) {
-	utils.initExampleConfigs();
+if (!existsSync(dbConfigPath)) {
+	const exampleConfig = {
+		databases: databaseRegistry,
+		settings: defaultSettings,
+	};
+	writeFileSync(dbConfigPath, JSON.stringify(exampleConfig, null, 2));
+	utils.logInfo("📝 Created initial configuration file");
+} else {
+	try {
+		const content = readFileSync(dbConfigPath, "utf-8");
+		const config = JSON.parse(content);
+		if (!config.databases || Object.keys(config.databases).length === 0) {
+			utils.logWarning("⚠️  No database configurations found in db.config.json");
+		}
+	} catch (error) {
+		utils.logWarning("⚠️  Could not parse database configuration file");
+	}
 }
 
 type ScriptOption = {
@@ -72,9 +95,9 @@ async function updateConfig() {
 
 	// Load existing config if it exists
 	let existingConfig = null;
-	if (existsSync(dbConfPath)) {
+	if (existsSync(dbConfigPath)) {
 		try {
-			const content = readFileSync(dbConfPath, "utf-8");
+			const content = readFileSync(dbConfigPath, "utf-8");
 			existingConfig = JSON.parse(content);
 			utils.logInfo("📝 Loaded existing configuration");
 		} catch (error) {
@@ -101,27 +124,26 @@ async function updateConfig() {
 	// Merge existing config with new config
 	const newConfig = {
 		databases: {
-			local: {
-				uri:
-					existingConfig?.databases?.local?.uri ||
-					`postgres://${pair.local.user}:${pair.local.password}@${pair.local.host}:${pair.local.port}/${pair.local.dbName}`,
-				name: pair.local.dbName,
-				user: pair.local.user,
-				host: pair.local.host,
-				port: pair.local.port,
-				password: pair.local.password,
-				dbName: pair.local.dbName,
-			},
-			production: {
-				uri:
-					existingConfig?.databases?.production?.uri ||
-					`postgres://${pair.production.user}:${pair.production.password}@${pair.production.host}:${pair.production.port}/${pair.production.dbName}`,
-				name: pair.production.dbName,
-				user: pair.production.user,
-				host: pair.production.host,
-				port: pair.production.port,
-				password: pair.production.password,
-				dbName: pair.production.dbName,
+			[selectedPair]: {
+				name: pair.name,
+				local: {
+					name: pair.local.name,
+					dbName: pair.local.dbName,
+					user: pair.local.user,
+					host: pair.local.host,
+					...(pair.local.port && { port: pair.local.port }),
+					...(pair.local.password && { password: pair.local.password }),
+				},
+				production: {
+					name: pair.production.name,
+					dbName: pair.production.dbName,
+					user: pair.production.user,
+					host: pair.production.host,
+					...(pair.production.port && { port: pair.production.port }),
+					...(pair.production.password && {
+						password: pair.production.password,
+					}),
+				},
 			},
 		},
 		settings: {
@@ -131,24 +153,24 @@ async function updateConfig() {
 	};
 
 	// Write to db.config.json
-	writeFileSync(dbConfPath, JSON.stringify(newConfig, null, 2));
+	writeFileSync(dbConfigPath, JSON.stringify(newConfig, null, 2));
 
 	// Generate db.conf content for environment variables
 	const content = `# Database configuration managed by db-cli
 
 # Local database configuration
-LOCAL_DB_NAME="${newConfig.databases.local.dbName}"
-LOCAL_DB_USER="${newConfig.databases.local.user}"
-LOCAL_DB_HOST="${newConfig.databases.local.host}"
-${newConfig.databases.local.port ? `LOCAL_DB_PORT="${newConfig.databases.local.port}"` : ""}
-${newConfig.databases.local.password ? `LOCAL_DB_PASS="${newConfig.databases.local.password}"` : ""}
+LOCAL_DB_NAME="${newConfig.databases[selectedPair].local.dbName}"
+LOCAL_DB_USER="${newConfig.databases[selectedPair].local.user}"
+LOCAL_DB_HOST="${newConfig.databases[selectedPair].local.host}"
+${newConfig.databases[selectedPair].local.port ? `LOCAL_DB_PORT="${newConfig.databases[selectedPair].local.port}"` : ""}
+${newConfig.databases[selectedPair].local.password ? `LOCAL_DB_PASS="${newConfig.databases[selectedPair].local.password}"` : ""}
 
 # Cloud database configuration
-CLOUD_DB_NAME="${newConfig.databases.production.dbName}"
-CLOUD_DB_USER="${newConfig.databases.production.user}"
-CLOUD_DB_HOST="${newConfig.databases.production.host}"
-${newConfig.databases.production.port ? `CLOUD_DB_PORT="${newConfig.databases.production.port}"` : ""}
-${newConfig.databases.production.password ? `CLOUD_DB_PASS="${newConfig.databases.production.password}"` : ""}
+CLOUD_DB_NAME="${newConfig.databases[selectedPair].production.dbName}"
+CLOUD_DB_USER="${newConfig.databases[selectedPair].production.user}"
+CLOUD_DB_HOST="${newConfig.databases[selectedPair].production.host}"
+${newConfig.databases[selectedPair].production.port ? `CLOUD_DB_PORT="${newConfig.databases[selectedPair].production.port}"` : ""}
+${newConfig.databases[selectedPair].production.password ? `CLOUD_DB_PASS="${newConfig.databases[selectedPair].production.password}"` : ""}
 
 # Database settings
 DB_MAX_CONNECTIONS=${newConfig.settings.maxConnections}
@@ -168,13 +190,13 @@ APP_PASS="${newConfig.settings.appPass}"`;
 	writeFileSync(join(process.cwd(), ".env"), content);
 
 	utils.logSuccess("Database configuration updated successfully!");
-	utils.logInfo(`📝 Configuration file: ${dbConfPath}`);
+	utils.logInfo(`📝 Configuration file: ${dbConfigPath}`);
 	utils.logInfo(`🔌 Connected to: ${pair.name}`);
 	utils.logInfo(
-		`📊 Local: ${newConfig.databases.local.dbName} on ${newConfig.databases.local.host}`,
+		`📊 Local: ${newConfig.databases[selectedPair].local.dbName} on ${newConfig.databases[selectedPair].local.host}`,
 	);
 	utils.logInfo(
-		`🌍 Production: ${newConfig.databases.production.dbName} on ${newConfig.databases.production.host}`,
+		`🌍 Production: ${newConfig.databases[selectedPair].production.dbName} on ${newConfig.databases[selectedPair].production.host}`,
 	);
 }
 
@@ -192,23 +214,18 @@ async function runScript(scriptName: string) {
 }
 
 async function getCurrentDatabase(): Promise<string | null> {
-	if (!existsSync(dbConfPath)) {
+	if (!existsSync(dbConfigPath)) {
 		return null;
 	}
 
 	try {
-		config({ path: dbConfPath });
-		const localDbName = process.env.LOCAL_DB_NAME;
-		const cloudDbName = process.env.CLOUD_DB_NAME;
+		const content = readFileSync(dbConfigPath, "utf-8");
+		const config = JSON.parse(content);
 
-		// Find the matching database pair
-		for (const [_, pair] of Object.entries(databaseRegistry)) {
-			if (
-				pair.local.dbName === localDbName &&
-				pair.production.dbName === cloudDbName
-			) {
-				return pair.name;
-			}
+		// Get the first database key (assuming only one is configured)
+		const dbKey = Object.keys(config.databases)[0];
+		if (dbKey) {
+			return config.databases[dbKey].name;
 		}
 		return null;
 	} catch (error) {

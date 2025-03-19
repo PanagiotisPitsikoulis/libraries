@@ -10,6 +10,6 @@ export const projectRegistry: Record<string, ProjectEnvConfig> = {
 		description: "Example project configuration",
 		variables: `DATABASE_URI=postgresql://user:pass@localhost:5432/db
 API_KEY=example_key
-NODE_ENV=development`
-	}
+NODE_ENV=development`,
+	},
 };

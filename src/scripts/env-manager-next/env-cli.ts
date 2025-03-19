@@ -1,32 +1,67 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import * as fs from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { select } from "@inquirer/prompts";
-import * as utils from "../utils";
+import { logError, logInfo, logSuccess, logWarning } from "../utils";
 import { projectRegistry } from "./env-registry";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const envRegistryPath = utils.getUnifiedTempFilePath("env.config.json");
+// Get the root directory (where the command is run)
+const rootDir = process.cwd();
+const tempDir = join(rootDir, ".next-toolchain-temp");
+const envRegistryPath = join(tempDir, "env.config.json");
+
+// Ensure temp directory exists
+if (!fs.existsSync(tempDir)) {
+	fs.mkdirSync(tempDir, { recursive: true });
+}
 
 // Initialize example configs if they don't exist
-if (!existsSync(envRegistryPath)) {
-	utils.initExampleConfigs();
+if (!fs.existsSync(envRegistryPath)) {
+	const exampleConfig = {
+		projects: projectRegistry,
+	};
+	fs.writeFileSync(envRegistryPath, JSON.stringify(exampleConfig, null, 2));
+	logInfo("📝 Created initial configuration file");
+} else {
+	try {
+		const content = fs.readFileSync(envRegistryPath, "utf-8");
+		const config = JSON.parse(content);
+		if (!config.projects || Object.keys(config.projects).length === 0) {
+			logWarning("⚠️  No project configurations found in env.config.json");
+		}
+	} catch (error) {
+		logWarning("⚠️  Could not parse environment configuration file");
+	}
 }
 
 async function getCurrentProject(): Promise<string | null> {
-	const envPath = join(process.cwd(), ".env");
-	if (!existsSync(envPath)) {
+	const envPath = join(rootDir, ".env");
+	if (!fs.existsSync(envPath)) {
 		return null;
 	}
 
 	try {
-		const content = readFileSync(envPath, "utf-8");
+		const content = fs.readFileSync(envPath, "utf-8");
 		const databaseUri = content.match(/DATABASE_URI=(.+)/)?.[1];
 
-		for (const [key, config] of Object.entries(projectRegistry)) {
+		// First try to get registry from temp config
+		let registry = projectRegistry;
+		if (fs.existsSync(envRegistryPath)) {
+			try {
+				const tempConfig = JSON.parse(
+					fs.readFileSync(envRegistryPath, "utf-8"),
+				);
+				registry = tempConfig.projects;
+			} catch (error) {
+				logWarning("Could not parse temp config, using default registry");
+			}
+		}
+
+		for (const [key, config] of Object.entries(registry)) {
 			if (config.variables.includes(databaseUri!)) {
 				return config.name;
 			}
@@ -40,22 +75,16 @@ async function getCurrentProject(): Promise<string | null> {
 async function updateEnv() {
 	// Load or create registry
 	let registry = projectRegistry;
-	if (existsSync(envRegistryPath)) {
+	if (fs.existsSync(envRegistryPath)) {
 		try {
-			const content = readFileSync(envRegistryPath, "utf-8");
-			const customRegistry = JSON.parse(content);
-			// Merge custom registry with defaults, keeping custom values
-			registry = {
-				...projectRegistry,
-				...customRegistry,
-				projects: {
-					...projectRegistry.projects,
-					...customRegistry.projects,
-				},
-			};
-			utils.logInfo("📝 Loaded existing configuration");
+			const content = fs.readFileSync(envRegistryPath, "utf-8");
+			const tempConfig = JSON.parse(content);
+			registry = tempConfig.projects;
+			logInfo(
+				"📝 Loaded existing configuration from .next-toolchain-temp/env.config.json",
+			);
 		} catch (error) {
-			utils.logWarning("Could not parse existing config, using defaults");
+			logWarning("Could not parse temp config, using default registry");
 		}
 	}
 
@@ -80,18 +109,24 @@ async function updateEnv() {
 	}
 
 	// Write to .env in project root
-	const envPath = join(process.cwd(), ".env");
-	writeFileSync(envPath, project.variables);
+	const envPath = join(rootDir, ".env");
+	fs.writeFileSync(
+		envPath,
+		Array.isArray(project.variables)
+			? project.variables.join("\n")
+			: project.variables,
+	);
 
-	// Save updated registry
-	writeFileSync(envRegistryPath, JSON.stringify(registry, null, 2));
+	// Save updated registry back to temp config
+	const tempConfig = { projects: registry };
+	fs.writeFileSync(envRegistryPath, JSON.stringify(tempConfig, null, 2));
 
-	utils.logSuccess("Project configuration updated successfully!");
-	utils.logInfo(`📝 Configuration file: ${envPath}`);
-	utils.logInfo(`🌍 Project: ${project.name}`);
-	utils.logInfo(`📁 Registry stored in: ${envRegistryPath}`);
+	logSuccess("Project configuration updated successfully!");
+	logInfo(`📝 Configuration file: ${envPath}`);
+	logInfo(`🌍 Project: ${project.name}`);
+	logInfo(`📁 Registry stored in: ${envRegistryPath}`);
 
-	utils.logWarning(
+	logWarning(
 		"⚠️  Remember to keep your .env file secure and never commit it to version control",
 	);
 }
@@ -102,7 +137,7 @@ async function main() {
 
 	const currentProject = await getCurrentProject();
 	if (currentProject) {
-		utils.logInfo(`Current project: ${currentProject}`);
+		logInfo(`Current project: ${currentProject}`);
 		console.log("------------------------------------------\n");
 	}
 
@@ -110,6 +145,6 @@ async function main() {
 }
 
 main().catch((error) => {
-	utils.logError(error instanceof Error ? error.message : "Unknown error");
+	logError(error instanceof Error ? error.message : "Unknown error");
 	process.exit(1);
 });
