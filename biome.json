@@ -1,0 +1,42 @@
+{
+    "organizeImports": {
+        "enabled": true
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": false,
+            "complexity": {
+                "noForEach": "error",
+                "noStaticOnlyClass": "error",
+                "noUselessSwitchCase": "error",
+                "useFlatMap": "error"
+            },
+            "style": {
+                "noNegationElse": "off",
+                "useForOf": "error",
+                "useNodejsImportProtocol": "error",
+                "useNumberNamespace": "error"
+            },
+            "suspicious": {
+                "noDoubleEquals": "error",
+                "noThenProperty": "error",
+                "useIsArray": "error"
+            }
+        }
+    },
+    "overrides": [
+        {
+            "include": [
+                "tests/**"
+            ],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noDoubleEquals": "off"
+                    }
+                }
+            }
+        }
+    ]
+}
