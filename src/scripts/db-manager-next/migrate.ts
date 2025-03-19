@@ -1,36 +1,34 @@
 #!/usr/bin/env bun
-import { join } from "node:path";
-import { executeStep, logError, logInfo, logSuccess } from "../utils";
+import { logError, logInfo, logSuccess } from "../utils";
+import { cloneDb } from "./clone-db";
+import { setupFreshDb } from "./setup-fresh-db";
 
-async function main() {
+export async function migrate() {
 	logInfo("🚀 Starting database migration process...");
 
-	// Step 1: Setup fresh database
-	const setupSuccess = await executeStep("Setting up fresh database", "bun", [
-		"run",
-		join(__dirname, "setup-fresh-db.ts"),
-	]);
+	try {
+		// Step 1: Setup fresh database
+		logInfo("Setting up fresh database...");
+		await setupFreshDb();
 
-	if (!setupSuccess) {
-		logError("Fresh database setup failed");
-		process.exit(1);
+		// Step 2: Clone database
+		logInfo("Cloning database...");
+		await cloneDb();
+
+		logSuccess("Database migration completed successfully!");
+	} catch (error) {
+		logError(
+			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+		);
+		throw error;
 	}
-
-	// Step 2: Clone database
-	const cloneSuccess = await executeStep("Cloning database", "bun", [
-		"run",
-		join(__dirname, "clone-db.ts"),
-	]);
-
-	if (!cloneSuccess) {
-		logError("Database cloning failed");
-		process.exit(1);
-	}
-
-	logSuccess("Database migration completed successfully!");
 }
 
-main().catch((error) => {
-	logError(`Unexpected error: ${error.message}`);
-	process.exit(1);
-});
+if (import.meta.main) {
+	migrate().catch((error) => {
+		logError(
+			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+		);
+		process.exit(1);
+	});
+}

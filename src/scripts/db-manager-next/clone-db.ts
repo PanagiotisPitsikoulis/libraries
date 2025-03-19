@@ -6,7 +6,6 @@ import { config } from "dotenv";
 import { logError, logInfo, logSuccess } from "../utils";
 
 // Load environment variables from db.conf in the temp folder
-// config({ path: join(getUnifiedTempDir(), "db.conf") });
 const rootDir = process.cwd();
 const tempDir = join(rootDir, ".next-toolchain-temp");
 config({ path: join(tempDir, "db.conf") });
@@ -37,7 +36,7 @@ async function runSQL(command: string, database = "postgres"): Promise<string> {
 	}
 }
 
-async function main() {
+export async function cloneDb() {
 	const tempDumpDir = join(__dirname, "temp_dump");
 
 	try {
@@ -122,10 +121,11 @@ async function main() {
 	}
 }
 
-main().catch((error) => {
-	console.error(
-		"❌ Error:",
-		error instanceof Error ? error.message : "Unknown error",
-	);
-	process.exit(1);
-});
+if (import.meta.main) {
+	cloneDb().catch((error) => {
+		logError(
+			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+		);
+		process.exit(1);
+	});
+}

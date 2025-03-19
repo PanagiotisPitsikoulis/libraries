@@ -42,7 +42,7 @@ async function runSQL(command: string): Promise<string> {
 	}
 }
 
-async function main() {
+export async function setTimeouts() {
 	logInfo("🔧 Setting database timeout parameters...");
 
 	try {
@@ -87,8 +87,15 @@ async function main() {
 		logSuccess("Timeout parameters set successfully!");
 	} catch (error) {
 		logError(error instanceof Error ? error.message : "Unknown error");
-		process.exit(1);
+		throw error;
 	}
 }
 
-main();
+if (import.meta.main) {
+	setTimeouts().catch((error) => {
+		logError(
+			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+		);
+		process.exit(1);
+	});
+}
