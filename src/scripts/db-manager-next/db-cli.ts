@@ -4,14 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { select } from "@inquirer/prompts";
 import { config } from "dotenv";
-import {
-	getUnifiedTempDir,
-	getUnifiedTempFilePath,
-	initExampleConfigs,
-	logError,
-	logInfo,
-	logSuccess,
-} from "../utils";
+import * as utils from "../utils";
 import {
 	type DBConfig,
 	type DBPair,
@@ -22,11 +15,11 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const dbConfPath = getUnifiedTempFilePath("db.config.json");
+const dbConfPath = utils.getUnifiedTempFilePath("db.config.json");
 
 // Initialize example configs if they don't exist
 if (!existsSync(dbConfPath)) {
-	initExampleConfigs();
+	utils.initExampleConfigs();
 }
 
 type ScriptOption = {
@@ -127,11 +120,11 @@ APP_PASS="${defaultSettings.appPass}"`;
 	// Write to db.conf
 	writeFileSync(dbConfPath, content);
 
-	logSuccess("Database configuration updated successfully!");
-	logInfo(`📝 Configuration file: ${dbConfPath}`);
-	logInfo(`🔌 Connected to: ${pair.name}`);
-	logInfo(`📊 Local: ${pair.local.dbName} on ${pair.local.host}`);
-	logInfo(
+	utils.logSuccess("Database configuration updated successfully!");
+	utils.logInfo(`📝 Configuration file: ${dbConfPath}`);
+	utils.logInfo(`🔌 Connected to: ${pair.name}`);
+	utils.logInfo(`📊 Local: ${pair.local.dbName} on ${pair.local.host}`);
+	utils.logInfo(
 		`🌍 Production: ${pair.production.dbName} on ${pair.production.host}`,
 	);
 }
@@ -142,7 +135,7 @@ async function runScript(scriptName: string) {
 		await import(scriptPath);
 		return true;
 	} catch (error) {
-		logError(
+		utils.logError(
 			`Failed to run ${scriptName}: ${error instanceof Error ? error.message : "Unknown error"}`,
 		);
 		return false;
@@ -180,7 +173,7 @@ async function main() {
 
 	const currentDb = await getCurrentDatabase();
 	if (currentDb) {
-		logInfo(`Current database: ${currentDb}`);
+		utils.logInfo(`Current database: ${currentDb}`);
 		console.log("----------------------------------\n");
 	}
 
@@ -200,9 +193,6 @@ async function main() {
 }
 
 main().catch((error) => {
-	console.error(
-		"❌ Error:",
-		error instanceof Error ? error.message : "Unknown error",
-	);
+	utils.logError(error instanceof Error ? error.message : "Unknown error");
 	process.exit(1);
 });
