@@ -37,13 +37,3 @@ async function dropDatabase() {
 
 	logSuccess(`✅ Database ${CLOUD_DB_NAME} dropped successfully`);
 }
-
-// Check if this module is being run directly
-if (require.main === module) {
-	dropDatabase().catch((error) => {
-		logError(
-			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
-		);
-		process.exit(1);
-	});
-}

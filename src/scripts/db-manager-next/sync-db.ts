@@ -38,13 +38,3 @@ async function syncDatabase() {
 
 	logSuccess(`✅ Database ${CLOUD_DB_NAME} synced successfully`);
 }
-
-// Check if this module is being run directly
-if (require.main === module) {
-	syncDatabase().catch((error) => {
-		logError(
-			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
-		);
-		process.exit(1);
-	});
-}

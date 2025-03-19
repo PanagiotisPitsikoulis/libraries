@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import "./version";
+import { handleError } from "../utils";
+import { version } from "./version";
 
 const type = process.argv[2] as "patch" | "minor" | "major";
 if (!type || !["patch", "minor", "major"].includes(type)) {
@@ -7,4 +8,6 @@ if (!type || !["patch", "minor", "major"].includes(type)) {
 	process.exit(1);
 }
 
-version(type);
+version(type).catch((error) => {
+	handleError(error, "Version update");
+});

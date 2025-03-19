@@ -65,13 +65,3 @@ export async function createTriggers() {
 
 	logSuccess(`✅ Triggers created successfully for database ${CLOUD_DB_NAME}`);
 }
-
-// Check if this module is being run directly
-if (require.main === module) {
-	createTriggers().catch((error) => {
-		logError(
-			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
-		);
-		process.exit(1);
-	});
-}

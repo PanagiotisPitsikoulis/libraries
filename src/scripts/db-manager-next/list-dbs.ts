@@ -32,13 +32,3 @@ async function listDatabases() {
 	console.log(result);
 	logSuccess("✅ Database listing completed");
 }
-
-// Check if this module is being run directly
-if (require.main === module) {
-	listDatabases().catch((error) => {
-		logError(
-			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
-		);
-		process.exit(1);
-	});
-}
