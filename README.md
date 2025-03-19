@@ -1,47 +1,79 @@
-# UI Component Library Documentation
+# NextToolchain 🛠️
 
-This is a comprehensive UI component library built with React, Radix UI, and Tailwind CSS. The library provides a collection of accessible, customizable, and reusable components for building modern web applications.
+A powerful CLI toolkit for Next.js projects that streamlines your development workflow with database management, environment configuration, and package publishing capabilities.
 
-## Getting Started
+## ✨ Features
 
-To install dependencies:
+- **Database Management** 🗄️
+  - Easy configuration of local and production databases
+  - One-click database migrations
+  - Connection management and monitoring
+  - Database cloning and backup tools
 
-```bash
-bun install
-```
+- **Environment Management** 🌍
+  - Centralized environment configuration
+  - Project-specific environment variables
+  - Secure credential management
+  - Easy switching between different project configurations
 
-To run the project:
+- **Package Publishing** 📦
+  - Automated version management
+  - One-command publishing to npm
+  - Semantic versioning support
+  - Git tag management
 
-```bash
-bun run index.ts
-```
+## 🚀 Quick Start
 
-## Project Structure
+1. **Install NextToolchain**
+   ```bash
+   bun add next-toolchain
+   ```
 
-```
-├── src/
-│   ├── components/
-│   │   └── ui/           # UI components
-│   └── lib/
-│       └── utils.ts      # Utility functions
-├── docs/                 # Documentation
-├── package.json         # Project dependencies
-├── tsconfig.json       # TypeScript configuration
-└── biome.json         # Biome configuration
-```
+2. **Configure Your Environment**
+   ```bash
+   next-toolchain-config-env
+   ```
 
-## Tech Stack
+3. **Set Up Your Database**
+   ```bash
+   next-toolchain-config-db
+   ```
 
-- React 19
-- TypeScript
-- Radix UI - For accessible component primitives
-- Tailwind CSS - For styling
-- Bun - JavaScript runtime and package manager
-- Biome - For linting and formatting
+4. **Publish Your Package**
+   ```bash
+   next-toolchain-publish
+   ```
 
-## Documentation Sections
+## 🛠️ Available Commands
 
-- [Components](./components.md) - Detailed documentation for each UI component
-- [Setup Guide](./setup.md) - Project setup and configuration
-- [Contributing](./contributing.md) - Guidelines for contributing to the project
-- [Utils](./utils.md) - Documentation for utility functions 
+- `next-toolchain-config-env` - Configure environment variables
+- `next-toolchain-config-db` - Set up database configurations
+- `next-toolchain-publish` - Publish your package to npm
+- `next-toolchain-version` - Manage package versions
+
+## 💡 Why NextToolchain?
+
+NextToolchain is designed to eliminate the complexity of managing Next.js project configurations. It provides a unified interface for common development tasks, making your workflow more efficient and less error-prone.
+
+- **Save Time**: Automate repetitive configuration tasks
+- **Reduce Errors**: Standardized workflows for common operations
+- **Stay Organized**: Centralized configuration management
+- **Boost Productivity**: Quick access to essential development tools
+
+## 🔧 Requirements
+
+- Node.js 18 or later
+- Bun runtime
+- Git (for version control features)
+
+## 📚 Documentation
+
+For detailed documentation and advanced usage, visit our [documentation site](https://next-toolchain.dev).
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [contributing guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details. 

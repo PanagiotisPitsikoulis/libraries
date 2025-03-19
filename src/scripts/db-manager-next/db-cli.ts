@@ -3,14 +3,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { select } from "@inquirer/prompts";
-import { config } from "dotenv";
 import * as utils from "../utils";
-import {
-	type DBConfig,
-	type DBPair,
-	databaseRegistry,
-	defaultSettings,
-} from "./db-registry";
+import { type DBPair, databaseRegistry, defaultSettings } from "./db-registry";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -118,39 +112,34 @@ async function updateConfig() {
 	console.log("🗄️  Database Configuration Manager");
 	console.log("----------------------------------\n");
 
-	// Load existing config if it exists
-	let existingConfig = null;
-	let availableDatabases = databaseRegistry;
+	// Load or create registry
+	let registry = databaseRegistry;
 	if (existsSync(dbConfigPath)) {
 		try {
 			const content = readFileSync(dbConfigPath, "utf-8");
-			existingConfig = JSON.parse(content);
-			availableDatabases = existingConfig.databases || databaseRegistry;
-			utils.logInfo("📝 Loaded existing configuration");
+			const tempConfig = JSON.parse(content);
+			registry = tempConfig.databases;
+			utils.logInfo(
+				"📝 Loaded existing configuration from .next-toolchain-temp/db.config.json",
+			);
 		} catch (error) {
 			console.log("\x1b[31m%s\x1b[0m", "❌ Error reading configuration file");
-			console.log("\x1b[33m%s\x1b[0m", "💡 Using default configuration");
-			existingConfig = {
-				databases: {},
-				settings: defaultSettings,
-			};
+			console.log("\x1b[33m%s\x1b[0m", "💡 Using default database registry");
 		}
 	}
 
 	// Select the database pair
-	const dbPairChoices = Object.entries(availableDatabases).map(
-		([key, pair]) => ({
-			name: pair.name,
-			value: key,
-		}),
-	);
+	const dbPairChoices = Object.entries(registry).map(([key, pair]) => ({
+		name: pair.name,
+		value: key,
+	}));
 
 	const selectedPair = await select({
 		message: "Select database:",
 		choices: dbPairChoices,
 	});
 
-	const pair = availableDatabases[selectedPair];
+	const pair = registry[selectedPair];
 	if (!pair) {
 		throw new Error(`Invalid database pair selected: ${selectedPair}`);
 	}
@@ -158,7 +147,7 @@ async function updateConfig() {
 	// Merge existing config with new config
 	const newConfig = {
 		databases: {
-			...(existingConfig?.databases || {}),
+			...registry,
 			[selectedPair]: {
 				name: pair.name,
 				local: {
@@ -183,7 +172,6 @@ async function updateConfig() {
 		},
 		settings: {
 			...defaultSettings,
-			...(existingConfig?.settings || {}),
 		},
 	};
 
@@ -222,7 +210,9 @@ APP_USER="${newConfig.settings.appUser}"
 APP_PASS="${newConfig.settings.appPass}"`;
 
 	// Write to db.conf
-	writeFileSync(join(process.cwd(), ".env"), content);
+	const dbConfPath = join(tempDir, "db.conf");
+	writeFileSync(dbConfPath, content);
+	utils.logInfo(`📄 db.conf saved at: ${dbConfPath}`);
 
 	utils.logSuccess("Database configuration updated successfully!");
 	utils.logInfo(`📝 Configuration file: ${dbConfigPath}`);

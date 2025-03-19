@@ -1,5 +1,5 @@
-export * from './db-registry';
+export * from "./db-registry";
 
 export function helloDbManager() {
-  return "Hello from DB Manager!";
-} 
+	return "Hello from DB Manager!";
+}
