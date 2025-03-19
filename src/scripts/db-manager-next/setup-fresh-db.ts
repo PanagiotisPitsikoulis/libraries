@@ -1,44 +1,16 @@
-#!/usr/bin/env bun
-import { join } from "node:path";
-import { $ } from "bun";
-import { config } from "dotenv";
+#!/usr/bin/env node
+
+import { logError, logInfo, logSuccess, logWarning } from "../utils";
 import {
-	executeStep,
-	logError,
-	logInfo,
-	logSuccess,
-	logWarning,
-} from "../utils";
-import { setTimeouts } from "./set-timeouts";
-
-// Load environment variables from db.conf in the unified temp folder
-const rootDir = process.cwd();
-const tempDir = join(rootDir, ".next-toolchain-temp");
-config({ path: join(tempDir, "db.conf") });
-
-const {
+	APP_PASS,
+	APP_USER,
 	CLOUD_DB_NAME,
 	CLOUD_DB_USER,
-	CLOUD_DB_PASS,
-	CLOUD_DB_HOST,
-	CLOUD_DB_PORT,
 	DB_MAX_CONNECTIONS,
-	APP_USER,
-	APP_PASS,
-} = process.env;
-
-async function runSQL(command: string, database = "postgres"): Promise<string> {
-	try {
-		const result =
-			await $`PGPASSWORD=${CLOUD_DB_PASS} psql -h ${CLOUD_DB_HOST} -p ${CLOUD_DB_PORT} -U ${CLOUD_DB_USER} -d ${database} -c ${command}`.text();
-		return result.trim();
-	} catch (error) {
-		logError(
-			`SQL command failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-		);
-		return "";
-	}
-}
+	getConnectionString,
+	runSQL,
+} from "./db-utils";
+import { setTimeouts } from "./set-timeouts";
 
 export async function setupFreshDb() {
 	logInfo("🔄 Starting fresh database setup...");
@@ -128,9 +100,7 @@ export async function setupFreshDb() {
 		await setTimeouts();
 
 		logInfo("🔑 Connection string:");
-		console.log(
-			`postgresql://${APP_USER}:${APP_PASS}@${CLOUD_DB_HOST}:${CLOUD_DB_PORT}/${CLOUD_DB_NAME}`,
-		);
+		console.log(getConnectionString());
 	} catch (error) {
 		logError(
 			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
@@ -139,7 +109,8 @@ export async function setupFreshDb() {
 	}
 }
 
-if (import.meta.main) {
+// Check if this module is being run directly
+if (require.main === module) {
 	setupFreshDb().catch((error) => {
 		logError(
 			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,

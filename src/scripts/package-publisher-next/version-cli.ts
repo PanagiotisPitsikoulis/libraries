@@ -1,5 +1,5 @@
-#!/usr/bin/env bun
-import { version } from "./version";
+#!/usr/bin/env node
+import "./version";
 
 const type = process.argv[2] as "patch" | "minor" | "major";
 if (!type || !["patch", "minor", "major"].includes(type)) {

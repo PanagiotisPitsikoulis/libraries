@@ -1,36 +1,24 @@
-#!/usr/bin/env bun
-import { join } from "node:path";
-import { $ } from "bun";
-import { config } from "dotenv";
-import { logError, logInfo, logSuccess, logWarning } from "../utils";
-
-// Load environment variables from db.conf in the unified temp folder
-// config({ path: join(getUnifiedTempDir(), "db.conf") });
-const rootDir = process.cwd();
-const tempDir = join(rootDir, ".next-toolchain-temp");
-config({ path: join(tempDir, "db.conf") });
-
-const {
-	CLOUD_DB_NAME,
-	CLOUD_DB_USER,
-	CLOUD_DB_PASS,
+#!/usr/bin/env node
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+import {
+	APP_USER,
 	CLOUD_DB_HOST,
+	CLOUD_DB_NAME,
+	CLOUD_DB_PASS,
 	CLOUD_DB_PORT,
+	CLOUD_DB_USER,
 	DB_MAX_CONNECTIONS,
-} = process.env;
+	logError,
+	logInfo,
+	logSuccess,
+	logWarning,
+	runSQL,
+} from "./db-utils";
 
-async function runSQL(command: string, database = "postgres"): Promise<string> {
-	try {
-		const result =
-			await $`PGPASSWORD=${CLOUD_DB_PASS} psql -h ${CLOUD_DB_HOST} -p ${CLOUD_DB_PORT} -U ${CLOUD_DB_USER} -d ${database} -c ${command}`.text();
-		return result.trim();
-	} catch (error) {
-		if (error instanceof Error) {
-			throw new Error(`SQL command failed: ${error.message}`);
-		}
-		throw error;
-	}
-}
+const execAsync = promisify(exec);
+
+const { LOCAL_DB_HOST, LOCAL_DB_USER, LOCAL_DB_NAME } = process.env;
 
 async function getConnectionCount(): Promise<number> {
 	const result = await runSQL(
@@ -51,7 +39,7 @@ async function getConnectionCount(): Promise<number> {
 	return count;
 }
 
-async function main() {
+export async function closeConnections() {
 	logInfo("🔍 Checking current connections...");
 	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
@@ -120,10 +108,12 @@ async function main() {
 	console.log(finalStatus);
 }
 
-main().catch((error) => {
-	console.error(
-		"❌ Error:",
-		error instanceof Error ? error.message : "Unknown error",
-	);
-	process.exit(1);
-});
+// Check if this module is being run directly
+if (require.main === module) {
+	closeConnections().catch((error) => {
+		logError(
+			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+		);
+		process.exit(1);
+	});
+}

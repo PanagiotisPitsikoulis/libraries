@@ -1,34 +1,33 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
+
+import { exec } from "node:child_process";
 import { unlinkSync } from "node:fs";
 import { join } from "node:path";
-import { $ } from "bun";
-import { config } from "dotenv";
+import { promisify } from "node:util";
 import { logError, logInfo, logSuccess } from "../utils";
-
-// Load environment variables from db.conf
-const rootDir = process.cwd();
-const tempDir = join(rootDir, ".next-toolchain-temp");
-config({ path: join(tempDir, "db.conf") });
-
-const {
-	LOCAL_DB_HOST,
-	LOCAL_DB_USER,
-	LOCAL_DB_NAME,
-	CLOUD_DB_NAME,
-	CLOUD_DB_USER,
-	CLOUD_DB_PASS,
+import {
+	APP_USER,
 	CLOUD_DB_HOST,
+	CLOUD_DB_NAME,
+	CLOUD_DB_PASS,
 	CLOUD_DB_PORT,
-} = process.env;
+	CLOUD_DB_USER,
+	runSQL,
+} from "./db-utils";
+
+const execAsync = promisify(exec);
+
+const { LOCAL_DB_HOST, LOCAL_DB_USER, LOCAL_DB_NAME } = process.env;
 
 async function runLocalSQL(
 	command: string,
 	database = "postgres",
 ): Promise<string> {
 	try {
-		const result =
-			await $`psql -h ${LOCAL_DB_HOST} -U ${LOCAL_DB_USER} -d ${database} -c ${command}`.text();
-		return result.trim();
+		const { stdout } = await execAsync(
+			`psql -h ${LOCAL_DB_HOST} -U ${LOCAL_DB_USER} -d ${database} -c "${command}"`,
+		);
+		return stdout.trim();
 	} catch (error) {
 		if (error instanceof Error) {
 			throw new Error(`Local SQL command failed: ${error.message}`);
@@ -37,7 +36,19 @@ async function runLocalSQL(
 	}
 }
 
-async function main() {
+async function runCommand(command: string): Promise<string> {
+	try {
+		const { stdout } = await execAsync(command);
+		return stdout.trim();
+	} catch (error) {
+		if (error instanceof Error) {
+			throw new Error(`Command failed: ${error.message}`);
+		}
+		throw error;
+	}
+}
+
+export async function migrateReverse() {
 	const tempDumpDir = join(__dirname, "temp_dump");
 
 	try {
@@ -48,7 +59,9 @@ async function main() {
 			"📤 Creating backup copy from cloud database (read-only operation)...",
 		);
 		try {
-			await $`PGPASSWORD=${CLOUD_DB_PASS} pg_dump -h ${CLOUD_DB_HOST} -p ${CLOUD_DB_PORT} -U ${CLOUD_DB_USER} -d ${CLOUD_DB_NAME} --no-owner --no-acl -Fd -j 4 --exclude-table-data='*_migrations' -f ${tempDumpDir}`;
+			await runCommand(
+				`PGPASSWORD=${CLOUD_DB_PASS} pg_dump -h ${CLOUD_DB_HOST} -p ${CLOUD_DB_PORT} -U ${CLOUD_DB_USER} -d ${CLOUD_DB_NAME} --no-owner --no-acl -Fd -j 4 --exclude-table-data='*_migrations' -f ${tempDumpDir}`,
+			);
 		} catch (error) {
 			logError("Failed to read from cloud database");
 			throw error;
@@ -75,14 +88,16 @@ async function main() {
 		// Step 4: Restore the dump to local database
 		logInfo("📥 Restoring database to local...");
 		try {
-			await $`pg_restore -h ${LOCAL_DB_HOST} -U ${LOCAL_DB_USER} -d ${LOCAL_DB_NAME} --no-owner --no-acl -j 4 ${tempDumpDir}`;
+			await runCommand(
+				`pg_restore -h ${LOCAL_DB_HOST} -U ${LOCAL_DB_USER} -d ${LOCAL_DB_NAME} --no-owner --no-acl -j 4 ${tempDumpDir}`,
+			);
 		} catch (error) {
 			logError("Failed to restore database");
 			throw error;
 		}
 
 		// Step 5: Clean up
-		await $`rm -rf ${tempDumpDir}`;
+		await runCommand(`rm -rf ${tempDumpDir}`);
 
 		// Step 6: Grant privileges to local user
 		logInfo("🔑 Setting up local permissions...");
@@ -111,10 +126,12 @@ async function main() {
 	}
 }
 
-main().catch((error) => {
-	console.error(
-		"❌ Error:",
-		error instanceof Error ? error.message : "Unknown error",
-	);
-	process.exit(1);
-});
+// Check if this module is being run directly
+if (require.main === module) {
+	migrateReverse().catch((error) => {
+		logError(
+			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+		);
+		process.exit(1);
+	});
+}

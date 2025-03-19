@@ -1,46 +1,17 @@
-#!/usr/bin/env bun
-import { join } from "node:path";
-import { $ } from "bun";
-import { config } from "dotenv";
+#!/usr/bin/env node
 import { logError, logInfo, logSuccess } from "../utils";
+import { APP_USER, CLOUD_DB_NAME, CLOUD_DB_USER, runSQL } from "./db-utils";
 
-// Load environment variables from db.conf
-const rootDir = process.cwd();
-const tempDir = join(rootDir, ".next-toolchain-temp");
-config({ path: join(tempDir, "db.conf") });
-
-const {
-	CLOUD_DB_NAME,
-	CLOUD_DB_USER,
-	CLOUD_DB_PASS,
-	CLOUD_DB_HOST,
-	CLOUD_DB_PORT,
-	DB_STATEMENT_TIMEOUT,
-	DB_IDLE_TRANSACTION_TIMEOUT,
-	DB_IDLE_SESSION_TIMEOUT,
-	DB_MASTER_IDLE_TIMEOUT,
-	DB_TCP_KEEPALIVES_IDLE,
-	DB_TCP_KEEPALIVES_INTERVAL,
-	DB_TCP_KEEPALIVES_COUNT,
-	APP_USER,
-} = process.env;
-
-async function runSQL(command: string): Promise<string> {
-	try {
-		// Execute each command separately to better handle errors
-		const commands = command.split(";").filter((cmd) => cmd.trim());
-		for (const cmd of commands) {
-			if (!cmd.trim()) continue;
-			await $`PGPASSWORD=${CLOUD_DB_PASS} psql -h ${CLOUD_DB_HOST} -p ${CLOUD_DB_PORT} -U ${CLOUD_DB_USER} -d ${CLOUD_DB_NAME} -c ${cmd.trim()}`;
-		}
-		return "Commands executed successfully";
-	} catch (error) {
-		if (error instanceof Error) {
-			throw new Error(`SQL command failed: ${error.message}`);
-		}
-		throw error;
-	}
-}
+// Database timeout settings
+const DB_STATEMENT_TIMEOUT = process.env.DB_STATEMENT_TIMEOUT || "30s";
+const DB_IDLE_TRANSACTION_TIMEOUT =
+	process.env.DB_IDLE_TRANSACTION_TIMEOUT || "30s";
+const DB_IDLE_SESSION_TIMEOUT = process.env.DB_IDLE_SESSION_TIMEOUT || "30s";
+const DB_MASTER_IDLE_TIMEOUT = process.env.DB_MASTER_IDLE_TIMEOUT || "30s";
+const DB_TCP_KEEPALIVES_IDLE = process.env.DB_TCP_KEEPALIVES_IDLE || "60";
+const DB_TCP_KEEPALIVES_INTERVAL =
+	process.env.DB_TCP_KEEPALIVES_INTERVAL || "10";
+const DB_TCP_KEEPALIVES_COUNT = process.env.DB_TCP_KEEPALIVES_COUNT || "6";
 
 export async function setTimeouts() {
 	logInfo("🔧 Setting database timeout parameters...");
@@ -91,7 +62,8 @@ export async function setTimeouts() {
 	}
 }
 
-if (import.meta.main) {
+// Check if this module is being run directly
+if (require.main === module) {
 	setTimeouts().catch((error) => {
 		logError(
 			`Unexpected error: ${error instanceof Error ? error.message : String(error)}`,

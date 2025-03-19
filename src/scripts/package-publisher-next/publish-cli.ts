@@ -1,6 +1,7 @@
-import { publish } from "./index";
+#!/usr/bin/env node
+import { handleError } from "../utils";
+import { publish } from "./publish";
 
-publish().catch((error: unknown) => {
-	console.error("Failed to publish package:", error);
-	process.exit(1);
+publish().catch((error) => {
+	handleError(error, "Package publishing");
 });

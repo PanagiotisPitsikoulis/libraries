@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { logError, logInfo, logSuccess } from "../utils";
 import { cloneDb } from "./clone-db";
 import { setupFreshDb } from "./setup-fresh-db";

@@ -1,15 +1,16 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { select } from "@inquirer/prompts";
 import * as utils from "../utils";
+import { cloneDb } from "./clone-db";
+import { closeConnections } from "./close-connections";
 import { type DBPair, databaseRegistry, defaultSettings } from "./db-registry";
+import { migrate } from "./migrate";
+import { migrateReverse } from "./migrate-reverse";
+import { setTimeouts } from "./set-timeouts";
+import { setupFreshDb } from "./setup-fresh-db";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Get the root directory (where the command is run)
 const rootDir = process.cwd();
 const tempDir = join(rootDir, ".next-toolchain-temp");
 const dbConfigPath = join(tempDir, "db.config.json");
@@ -226,9 +227,53 @@ APP_PASS="${newConfig.settings.appPass}"`;
 }
 
 async function runScript(scriptName: string) {
-	const scriptPath = join(__dirname, `${scriptName}.ts`);
 	try {
-		await import(scriptPath);
+		switch (scriptName) {
+			case "migrate":
+				try {
+					await migrate();
+				} catch (error) {
+					utils.logError(
+						`Failed to run migrate: ${error instanceof Error ? error.message : "Unknown error"}`,
+					);
+				}
+				break;
+			case "migrate-reverse":
+				try {
+					await migrateReverse();
+				} catch (error) {
+					utils.logError(
+						`Failed to run migrate-reverse: ${error instanceof Error ? error.message : "Unknown error"}`,
+					);
+				}
+				break;
+			case "setup-fresh-db":
+				await setupFreshDb();
+				break;
+			case "set-timeouts":
+				try {
+					await setTimeouts();
+				} catch (error) {
+					utils.logError(
+						`Failed to run set-timeouts: ${error instanceof Error ? error.message : "Unknown error"}`,
+					);
+				}
+				break;
+			case "close-connections":
+				try {
+					await closeConnections();
+				} catch (error) {
+					utils.logError(
+						`Failed to run close-connections: ${error instanceof Error ? error.message : "Unknown error"}`,
+					);
+				}
+				break;
+			case "clone-db":
+				await cloneDb();
+				break;
+			default:
+				throw new Error(`Unknown script: ${scriptName}`);
+		}
 		return true;
 	} catch (error) {
 		utils.logError(
