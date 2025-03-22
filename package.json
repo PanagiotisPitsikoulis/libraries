@@ -1,6 +1,6 @@
 {
   "name": "next-toolchain",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "type": "module",
   "main": "./dist/ui/index.cjs",
   "module": "./dist/ui/index.js",
@@ -49,7 +49,7 @@
     "version:patch": "bun ./src/scripts/package-publisher-next/version-cli.ts patch",
     "version:minor": "bun ./src/scripts/package-publisher-next/version-cli.ts minor",
     "version:major": "bun ./src/scripts/package-publisher-next/version-cli.ts major",
-    "build:index": "bun ./src/scripts/build-index-files/index.ts ./src/lib ./src/components/ui ./src/packages ./src/scripts"
+    "build:index": "bun ./src/scripts/build-index-files/index.ts ./src/lib ./src/components/ui ./src/components ./src/packages ./src/scripts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.2.5",
