@@ -16,7 +16,7 @@ import {
 	Pagination,
 } from "swiper/modules";
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "./badge";
 
 interface CarouselProps {
 	images: { src: string; alt: string }[];

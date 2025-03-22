@@ -12,7 +12,7 @@ import "swiper/css/effect-coverflow";
 import { SparklesIcon } from "lucide-react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "./badge";
 
 interface CarouselProps {
 	images: { src: string; alt: string }[];
