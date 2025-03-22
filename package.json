@@ -1,6 +1,6 @@
 {
   "name": "next-toolchain",
-  "version": "1.23.0",
+  "version": "1.24.0",
   "type": "module",
   "main": "./dist/ui/index.cjs",
   "module": "./dist/ui/index.js",
@@ -11,10 +11,25 @@
       "import": "./dist/ui/index.js",
       "require": "./dist/ui/index.cjs"
     },
+    "./components": {
+      "types": "./dist/ui/components/index.d.ts",
+      "import": "./dist/ui/components/index.js",
+      "require": "./dist/ui/components/index.cjs"
+    },
     "./components/ui": {
       "types": "./dist/ui/components/ui/index.d.ts",
       "import": "./dist/ui/components/ui/index.js",
       "require": "./dist/ui/components/ui/index.cjs"
+    },
+    "./lib": {
+      "types": "./dist/ui/lib/index.d.ts",
+      "import": "./dist/ui/lib/index.js",
+      "require": "./dist/ui/lib/index.cjs"
+    },
+    "./packages": {
+      "types": "./dist/ui/packages/index.d.ts",
+      "import": "./dist/ui/packages/index.js",
+      "require": "./dist/ui/packages/index.cjs"
     },
     "./styles": "./dist/ui/styles/globals.css",
     "./node": {
