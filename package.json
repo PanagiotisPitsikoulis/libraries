@@ -1,6 +1,6 @@
 {
   "name": "next-toolchain",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "type": "module",
   "main": "./dist/ui/index.cjs",
   "module": "./dist/ui/index.js",
