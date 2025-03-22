@@ -90,7 +90,7 @@ const getToc = () => (node, file) => {
     file.data = getItems(table.map, {});
 };
 
-export type TableOfContents = Items;
+export type TableOfContentsType = Items;
 
 export async function getTableOfContents(
     content: string,

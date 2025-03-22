@@ -2,13 +2,12 @@ import { defineConfig } from "tsup";
 
 // Browser config (for components)
 export const browserConfig = defineConfig({
-  entry: ["./src/index.ts", './src/components/ui/index.ts'],
+  entry: ["./src/index.ts"],
   format: ["esm", "cjs"],
   dts: true,
   clean: true,
   external: [
     "react",
-    "@/components/ui/button"
   ],
   treeshake: true,
   sourcemap: true,

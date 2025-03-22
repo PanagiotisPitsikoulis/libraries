@@ -1,15 +1,51 @@
 #!/usr/bin/env node
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readdir, writeFile } from "node:fs/promises";
 import { join, parse, relative } from "node:path";
 import { logError, logInfo, logSuccess, logWarning } from "../utils";
 
+async function getExclusions(dir: string): Promise<string[]> {
+    const indexPath = join(dir, "index.ts");
+    if (!existsSync(indexPath)) {
+        return [];
+    }
+
+    try {
+        const content = readFileSync(indexPath, "utf-8");
+        const lines = content.split("\n");
+        const exclusions: string[] = [];
+
+        for (const line of lines) {
+            // Match comments like "//exclude './scripts'" or "// exclude './scripts'"
+            const match = line.match(/\/\/\s*exclude\s+'([^']+)'|\/\/\s*exclude\s+"([^"]+)"/);
+            if (match) {
+                const path = match[1] || match[2];
+                // Remove './' prefix if exists
+                exclusions.push(path.replace(/^\.\//, ''));
+            }
+        }
+
+        return exclusions;
+    } catch (error) {
+        logWarning(`Failed to read exclusions from ${indexPath}: ${error instanceof Error ? error.message : String(error)}`);
+        return [];
+    }
+}
+
 async function findExportableItems(dir: string): Promise<string[]> {
     const files = await readdir(dir, { withFileTypes: true });
     const exportableItems: string[] = [];
+    const exclusions = await getExclusions(dir);
 
     for (const item of files) {
         const fullPath = join(dir, item.name);
+        const itemName = parse(item.name).name;
+
+        // Skip if item is in exclusions
+        if (exclusions.includes(itemName)) {
+            logInfo(`Skipping excluded item: ${itemName}`);
+            continue;
+        }
 
         if (item.isDirectory()) {
             // Check if directory has an index file
@@ -48,7 +84,21 @@ async function buildIndexFile(dir: string): Promise<void> {
         const indexContent = await generateIndexContent(exportableItems);
         const indexPath = join(dir, "index.ts");
 
-        await writeFile(indexPath, indexContent);
+        // Preserve exclusion comments if they exist
+        let finalContent = indexContent;
+        if (existsSync(indexPath)) {
+            const currentContent = readFileSync(indexPath, "utf-8");
+            const exclusionComments = currentContent
+                .split("\n")
+                .filter(line => line.trim().startsWith("//exclude"))
+                .join("\n");
+
+            if (exclusionComments) {
+                finalContent = `${exclusionComments}\n${indexContent}`;
+            }
+        }
+
+        await writeFile(indexPath, finalContent);
         logSuccess(`Generated index file for ${dir} with ${exportableItems.length} exports`);
         logInfo(`Exports: ${exportableItems.map(item => parse(item).name).join(", ")}`);
     } catch (error) {

@@ -5,7 +5,7 @@ import * as React from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import canUseDOM from "../../lib/canUseDom";
-import type { TableOfContents as TableOfContentsType } from "../../lib/toc";
+import type { TableOfContentsType as TableOfContentsType } from "../../lib/toc";
 import { cn, encodeId } from "../../lib/utils";
 import { useMounted } from "../hooks/use-mounted";
 
