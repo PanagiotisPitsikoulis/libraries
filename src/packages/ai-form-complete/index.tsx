@@ -13,7 +13,3 @@ export function AiFormComplete({ children, className }: AiFormCompleteProps) {
     </Button>
   );
 }
-
-export function helloAiForm() {
-  return "Hello from AI Form Complete!";
-}
