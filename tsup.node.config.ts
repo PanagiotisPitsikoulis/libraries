@@ -1,20 +1,5 @@
 import { defineConfig } from "tsup";
 
-// Browser config (for components)
-export const browserConfig = defineConfig({
-	entry: ["./src/index.node.ts"],
-	format: ["esm", "cjs"],
-	dts: true,
-	clean: true,
-	treeshake: true,
-	sourcemap: true,
-	minify: true,
-	splitting: false,
-	outDir: "dist",
-	target: "es2020",
-	platform: "browser",
-});
-
 // Node.js config (for scripts)
 export default defineConfig({
 	entry: {
@@ -25,6 +10,7 @@ export default defineConfig({
 			"./src/scripts/package-publisher-next/publish-cli.ts",
 		"package-publisher-next/version-cli":
 			"./src/scripts/package-publisher-next/version-cli.ts",
+		"build-index-files/index": "./src/scripts/build-index-files/index.ts",
 	},
 	format: ["esm"],
 	outDir: "dist/node",

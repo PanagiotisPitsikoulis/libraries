@@ -1,15 +1,19 @@
 "use client";
 
-import useClickOutside from "@/hooks/useClickOutside";
 import { cn } from "@/lib/utils";
+import useClickOutside from "@/packages/hooks/useClickOutside";
 import { XIcon } from "lucide-react";
 import {
 	AnimatePresence,
 	MotionConfig,
-	Transition,
-	Variant,
 	motion,
 } from "motion/react";
+
+import type {
+	Transition,
+	Variant,
+} from "motion/react";
+
 import React, {
 	useCallback,
 	useContext,

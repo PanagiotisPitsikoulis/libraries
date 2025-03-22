@@ -1,10 +1,15 @@
 "use client";
 import { cn } from "@/lib/utils";
+
 import {
 	AnimatePresence,
-	SpringOptions,
-	Transition,
-	Variant,
+	type SpringOptions,
+	type Transition,
+	type Variant,
+} from "motion/react";
+
+import {
+
 	motion,
 	useMotionValue,
 	useSpring,

@@ -1,8 +1,11 @@
 "use client";
 
-import {
+import type {
 	MotionStyle,
 	SpringOptions,
+} from "motion/react";
+
+import {
 	motion,
 	useMotionTemplate,
 	useMotionValue,

@@ -1,8 +1,11 @@
 "use client";
 import { cn } from "@/lib/utils";
+import type {
+	SpringOptions,
+} from "motion/react";
+
 import {
 	MotionValue,
-	SpringOptions,
 	motion,
 	useMotionValue,
 	useSpring,
