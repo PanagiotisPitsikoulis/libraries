@@ -1,6 +1,6 @@
 {
   "name": "next-toolchain",
-  "version": "1.17.0",
+  "version": "1.18.0",
   "type": "module",
   "main": "./dist/ui/index.cjs",
   "module": "./dist/ui/index.js",
@@ -25,7 +25,8 @@
     "next-toolchain-config-env": "dist/node/env-manager-next/env-cli.js",
     "next-toolchain-config-db": "dist/node/db-manager-next/db-cli.js",
     "next-toolchain-publish": "dist/node/package-publisher-next/publish-cli.js",
-    "next-toolchain-version": "dist/node/package-publisher-next/version-cli.js"
+    "next-toolchain-version": "dist/node/package-publisher-next/version-cli.js",
+    "next-toolchain-build-index": "dist/node/build-index-files/index.js"
   },
   "files": [
     "dist/ui",
@@ -35,7 +36,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "clean:repo": "git checkout --orphan temp_branch && git add -A && git commit -m 'Initial commit' && git branch -D main && git branch -m main && git push -f --set-upstream origin main",
-    "prebuild": "bun run clean",
+    "prebuild": "bun run clean && bun run build:index",
     "build:ui": "tsup --config tsup.config.ts",
     "build:node": "tsup --config tsup.node.config.ts",
     "build": "bun run prebuild && bun run build:node && bun run build:ui",
@@ -47,7 +48,8 @@
     "publish:major": "bun ./src/scripts/package-publisher-next/version-cli.ts major && bun run build && bun run publish",
     "version:patch": "bun ./src/scripts/package-publisher-next/version-cli.ts patch",
     "version:minor": "bun ./src/scripts/package-publisher-next/version-cli.ts minor",
-    "version:major": "bun ./src/scripts/package-publisher-next/version-cli.ts major"
+    "version:major": "bun ./src/scripts/package-publisher-next/version-cli.ts major",
+    "build:index": "bun ./src/scripts/build-index-files/index.ts ./src/lib ./src/components/ui ./src/packages ./src/scripts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.2.5",
