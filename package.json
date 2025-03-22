@@ -1,6 +1,6 @@
 {
   "name": "next-toolchain",
-  "version": "1.22.0",
+  "version": "1.23.0",
   "type": "module",
   "main": "./dist/ui/index.cjs",
   "module": "./dist/ui/index.js",
@@ -10,6 +10,11 @@
       "types": "./dist/ui/index.d.ts",
       "import": "./dist/ui/index.js",
       "require": "./dist/ui/index.cjs"
+    },
+    "./components/ui": {
+      "types": "./dist/ui/components/ui/index.d.ts",
+      "import": "./dist/ui/components/ui/index.js",
+      "require": "./dist/ui/components/ui/index.cjs"
     },
     "./styles": "./dist/ui/styles/globals.css",
     "./node": {
