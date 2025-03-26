@@ -1,6 +1,6 @@
 {
   "name": "next-toolchain",
-  "version": "1.29.0",
+  "version": "1.30.0",
   "type": "module",
   "main": "./dist/ui/index.cjs",
   "module": "./dist/ui/index.js",
@@ -149,10 +149,10 @@
     "tailwindcss": "^4.0.14"
   },
   "devDependencies": {
-    "@types/bun": "latest",
     "@biomejs/biome": "^1.9.4",
     "@inquirer/prompts": "^7.4.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/bun": "latest",
     "@types/escape-html": "^1.0.4",
     "@types/node": "22.5.4",
     "@types/react": "19.0.7",
@@ -160,8 +160,9 @@
     "copyfiles": "^2.4.1",
     "dotenv": "^16.4.7",
     "postcss": "^8.5.3",
-    "typescript": "5.7.3",
-    "tsup": "^8.0.2"
+    "puppeteer": "^24.4.0",
+    "tsup": "^8.0.2",
+    "typescript": "5.7.3"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
