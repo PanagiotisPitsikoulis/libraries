@@ -11,6 +11,8 @@ export default defineConfig({
 		"package-publisher-next/version-cli":
 			"./src/scripts/package-publisher-next/version-cli.ts",
 		"build-index-files/index": "./src/scripts/build-index-files/index.ts",
+		"next-screenshot/screenshot-cli":
+			"./src/scripts/next-screenshot/screenshot-cli.ts",
 	},
 	format: ["esm"],
 	outDir: "dist/node",

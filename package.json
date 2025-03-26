@@ -1,6 +1,6 @@
 {
   "name": "next-toolchain",
-  "version": "1.30.0",
+  "version": "1.29.0",
   "type": "module",
   "main": "./dist/ui/index.cjs",
   "module": "./dist/ui/index.js",
@@ -46,7 +46,8 @@
     "next-toolchain-config-db": "dist/node/db-manager-next/db-cli.js",
     "next-toolchain-publish": "dist/node/package-publisher-next/publish-cli.js",
     "next-toolchain-version": "dist/node/package-publisher-next/version-cli.js",
-    "next-toolchain-build-index": "dist/node/build-index-files/index.js"
+    "next-toolchain-build-index": "dist/node/build-index-files/index.js",
+    "next-toolchain-screenshot": "dist/node/next-screenshot/screenshot-cli.js"
   },
   "files": [
     "dist/ui",

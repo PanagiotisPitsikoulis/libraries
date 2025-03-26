@@ -73,7 +73,7 @@ const MaskedDiv: React.FC<MaskedDivProps> = ({
 		// Intersection Observer for viewport visibility
 		const observer = new IntersectionObserver(
 			(entries) => {
-				entries.forEach((entry) => {
+				for (const entry of entries) {
 					const videoElement = entry.target as HTMLVideoElement;
 					if (entry.isIntersecting) {
 						const playPromise = videoElement.play();
@@ -85,7 +85,7 @@ const MaskedDiv: React.FC<MaskedDivProps> = ({
 					} else {
 						videoElement.pause();
 					}
-				});
+				}
 			},
 			{
 				threshold: 0.1, // Start playing when 10% of the video is visible

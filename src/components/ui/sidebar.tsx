@@ -7,17 +7,17 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/packages";
-import { Button } from "./button";
-import { Input } from "./input";
-import { Separator } from "./separator";
-import { Sheet, SheetContent } from "./sheet";
-import { Skeleton } from "./skeleton";
+import { Button } from ".//button";
+import { Input } from ".//input";
+import { Separator } from ".//separator";
+import { Sheet, SheetContent } from ".//sheet";
+import { Skeleton } from ".//skeleton";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
-} from "./tooltip";
+} from ".//tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
